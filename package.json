@@ -1,0 +1,52 @@
+{
+    "name": "signitize",
+    "version": "1.0.0",
+    "description": "Official Node.js client for the Signitize API: detect disposable emails, Gmail alias duplicates and undeliverable addresses at signup.",
+    "keywords": [
+        "disposable email",
+        "disposable email detection",
+        "temporary email",
+        "email validation",
+        "email verification",
+        "email normalization",
+        "gmail alias",
+        "signup",
+        "free trial abuse",
+        "fake signups",
+        "signitize"
+    ],
+    "homepage": "https://www.signitize.io/docs",
+    "bugs": {
+        "email": "support@signitize.io"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/signitize-io/signitize-node.git"
+    },
+    "license": "MIT",
+    "author": "Signitize <support@signitize.io> (https://www.signitize.io)",
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "sideEffects": false,
+    "engines": {
+        "node": ">=20"
+    },
+    "scripts": {
+        "build": "tsc",
+        "test": "npm run build && node --test",
+        "prepublishOnly": "npm test"
+    },
+    "devDependencies": {
+        "typescript": "7.0.2"
+    }
+}
