@@ -23,6 +23,34 @@ test('check sends the key and email and returns the result', async () => {
     assert.equal(calls[0].init.body, JSON.stringify({ email: 'J.O.H.N+x@googlemail.com' }))
 })
 
+test('usage sends a GET with the key and returns the usage', async () => {
+    const usage = {
+        plan: 'premium',
+        status: 'active',
+        quota: 100000,
+        used: 1234,
+        remaining: 98766,
+        resetsAt: '2026-11-01T00:00:00.000Z',
+        premiumUntil: '2027-01-15T10:00:00.000Z',
+    }
+    const { fetch, calls } = fakeFetch(200, usage)
+
+    assert.deepEqual(await new Signitize({ apiKey: 'sk_live_test', fetch }).usage(), usage)
+    assert.equal(calls[0].url, 'https://api.signitize.io/v1/usage')
+    assert.equal(calls[0].init.method, 'GET')
+    assert.equal(calls[0].init.headers.Authorization, 'Bearer sk_live_test')
+    assert.equal(calls[0].init.body, undefined)
+    assert.equal(calls[0].init.headers['Content-Type'], undefined)
+})
+
+test('usage rate limit becomes a RateLimitError with retryAfter', async () => {
+    const { fetch } = fakeFetch(429, { error: { type: 'RateLimitError', message: 'Too many usage requests.' } }, { 'retry-after': '42' })
+    const error = await new Signitize({ apiKey: 'k', fetch }).usage().catch((e) => e)
+    assert.ok(error instanceof SignitizeError)
+    assert.equal(error.type, 'RateLimitError')
+    assert.equal(error.retryAfter, 42)
+})
+
 test('baseUrl trailing slashes are removed', async () => {
     const { fetch, calls } = fakeFetch(200, { email: 'a@b.co', disposable: false, deliverable: true })
     await new Signitize({ apiKey: 'k', baseUrl: 'http://localhost:5000/', fetch }).check('a@b.co')

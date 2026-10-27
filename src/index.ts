@@ -7,6 +7,23 @@ export interface CheckResult {
     deliverable: boolean
 }
 
+export interface Usage {
+    /** Plan whose limits apply now. */
+    plan: 'free' | 'premium'
+    /** `past_due`: Premium ended, grace period with Premium limits. `expired`: back to Free limits. */
+    status: 'active' | 'past_due' | 'expired'
+    /** Checks included per month. */
+    quota: number
+    /** Checks counted this month (UTC). */
+    used: number
+    /** Checks left this month. */
+    remaining: number
+    /** ISO date when the monthly quota resets (1st of next month, 00:00 UTC). */
+    resetsAt: string
+    /** ISO date when the paid Premium period ends, `null` if you never bought Premium. */
+    premiumUntil: string | null
+}
+
 export type SafeCheckResult =
     | { status: 'checked'; result: CheckResult }
     | { status: 'invalid'; error: SignitizeError }
@@ -118,16 +135,28 @@ export class Signitize {
      * Checks one email address. Throws a `SignitizeError` on any error, including
      * `400` (not an email address), timeouts and network errors.
      */
-    async check(email: string): Promise<CheckResult> {
+    check(email: string): Promise<CheckResult> {
+        return this.#request<CheckResult>('POST', '/v1/check', { email })
+    }
+
+    /**
+     * Returns your plan and this month's usage. Doesn't count toward your quota.
+     * Limited to 10 calls a minute per key: to track usage continuously, read the
+     * usage headers of your checks instead of polling.
+     */
+    usage(): Promise<Usage> {
+        return this.#request<Usage>('GET', '/v1/usage')
+    }
+
+    async #request<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
+        const headers: Record<string, string> = { Authorization: `Bearer ${this.#apiKey}` }
+        if (body !== undefined) headers['Content-Type'] = 'application/json'
         let response: Response
         try {
-            response = await this.#fetch(`${this.#baseUrl}/v1/check`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${this.#apiKey}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
+            response = await this.#fetch(`${this.#baseUrl}${path}`, {
+                method,
+                headers,
+                body: body === undefined ? undefined : JSON.stringify(body),
                 signal: AbortSignal.timeout(this.#timeoutMs),
             })
         } catch (cause) {
@@ -140,7 +169,7 @@ export class Signitize {
         }
 
         const requestId = response.headers.get('x-request-id')
-        if (response.ok) return (await response.json()) as CheckResult
+        if (response.ok) return (await response.json()) as T
 
         const { type, message } = await readError(response)
         const retryAfter = Number(response.headers.get('retry-after'))

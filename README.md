@@ -65,6 +65,16 @@ Store `email` in a **unique** column, and send your verification email to the ad
 | `invalid`        | The value is not an email address (`400`)                         | Ask the user to fix it         |
 | `unavailable`    | Timeout, network error, outage, quota used up, wrong key          | Create the account as pending  |
 
+## Check your usage
+
+```js
+const usage = await signitize.usage()
+// { plan: 'premium', status: 'active', quota: 100000, used: 1234, remaining: 98766,
+//   resetsAt: '2026-11-01T00:00:00.000Z', premiumUntil: '2027-01-15T10:00:00.000Z' }
+```
+
+`usage()` doesn't count toward your quota. It is limited to 10 calls a minute per key, so don't poll it on every request. See [Check your usage](https://www.signitize.io/docs/rate-limits#check-your-usage).
+
 ## Options
 
 ```js
@@ -80,7 +90,7 @@ The client refuses to run in a browser, where your key would be visible to every
 
 ## Errors
 
-`check()` throws a `SignitizeError`:
+`check()` and `usage()` throw a `SignitizeError`:
 
 ```js
 import { SignitizeError } from 'signitize'
