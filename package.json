@@ -1,6 +1,6 @@
 {
     "name": "signitize",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Official Node.js client for the Signitize API: detect disposable emails, Gmail alias duplicates and undeliverable addresses at signup.",
     "keywords": [
         "disposable email",
